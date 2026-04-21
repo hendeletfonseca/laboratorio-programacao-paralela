@@ -36,27 +36,22 @@ int strategySendRecieve(int n, int meu_ranque, int num_procs, int raiz) {
             if (inicio > n) {
                 tag = 99;
                 stop++;
-            } else {
-                tag = 1;
             }
 
             MPI_Send(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
             inicio += TAMANHO;
         }
     } else {
-        while (1) {
+        while (estado.MPI_TAG != 99) {
             MPI_Recv(&inicio, 1, MPI_INT, raiz, MPI_ANY_TAG, MPI_COMM_WORLD, &estado);
-            if (estado.MPI_TAG == 99) {
-                break;
-            }
-
-            for (i = inicio, cont = 0; i < (inicio + TAMANHO) && i < n; i += 2) {
-                if (primo(i) == 1) {
-                    cont++;
+            if (estado.MPI_TAG != 99) {
+                for (i = inicio, cont = 0; i < (inicio + TAMANHO) && i < n; i += 2) {
+                    if (primo(i) == 1) {
+                        cont++;
+                    }
                 }
+                MPI_Send(&cont, 1, MPI_INT, raiz, tag, MPI_COMM_WORLD);   
             }
-
-            MPI_Send(&cont, 1, MPI_INT, raiz, 1, MPI_COMM_WORLD);
         }
     }
 
