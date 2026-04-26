@@ -130,15 +130,18 @@ int strategyIsendRecv(int n, int meu_ranque, int num_procs, int raiz) {
 int strategyRsendRecv(int n, int meu_ranque, int num_procs, int raiz) {
     int cont = 0, total = 0;
     int i, inicio = 3, dest, tag = 1, stop = 0;
+    int ok = 1;
     MPI_Status estado;
 
     if (meu_ranque == raiz) {
         for (dest = 1; dest < num_procs && inicio < n; dest++, inicio += TAMANHO) {
+            MPI_Recv(&ok, 1, MPI_INT, dest, 99, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Rsend(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
         }
 
         // Workers sem tarefa inicial precisam receber tag 99 para nao bloquear em Recv.
         for (; dest < num_procs; dest++) {
+            MPI_Recv(&ok, 1, MPI_INT, dest, 99, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Rsend(&inicio, 1, MPI_INT, dest, 99, MPI_COMM_WORLD);
             stop++;
         }
@@ -152,12 +155,14 @@ int strategyRsendRecv(int n, int meu_ranque, int num_procs, int raiz) {
                 tag = 99;
                 stop++;
             }
-
+            
+            MPI_Recv(&ok, 1, MPI_INT, dest, 99, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
             MPI_Rsend(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
             inicio += TAMANHO;
         }
     } else {
         while (estado.MPI_TAG != 99) {
+            MPI_Send(&ok, 1, MPI_INT, raiz, 99, MPI_COMM_WORLD);
             MPI_Recv(&inicio, 1, MPI_INT, raiz, MPI_ANY_TAG, MPI_COMM_WORLD, &estado);
             if (estado.MPI_TAG != 99) {
                 for (i = inicio, cont = 0; i < (inicio + TAMANHO) && i < n; i += 2) {
@@ -280,13 +285,10 @@ int strategySendIrecv(int n, int meu_ranque, int num_procs, int raiz) {
         for (dest = 1; dest < num_procs && inicio < n; dest++, inicio += TAMANHO) {
             MPI_Send(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
         }
-
-        // Workers sem tarefa inicial precisam receber tag 99 para nao bloquear em Recv.
         for (; dest < num_procs; dest++) {
             MPI_Send(&inicio, 1, MPI_INT, dest, 99, MPI_COMM_WORLD);
             stop++;
         }
-
         while (stop < (num_procs - 1)) {
             MPI_Irecv(&cont, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
             MPI_Wait(&req, &estado);
@@ -433,24 +435,19 @@ int strategyBsendIrecv(int n, int meu_ranque, int num_procs, int raiz) {
         for (dest = 1; dest < num_procs && inicio < n; dest++, inicio += TAMANHO) {
             MPI_Bsend(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
         }
-
-        // Workers sem tarefa inicial precisam receber tag 99 para nao bloquear em Recv.
         for (; dest < num_procs; dest++) {
             MPI_Bsend(&inicio, 1, MPI_INT, dest, 99, MPI_COMM_WORLD);
             stop++;
         }
-
         while (stop < (num_procs - 1)) {
             MPI_Irecv(&cont, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &req);
             MPI_Wait(&req, &estado);
             total += cont;
             dest = estado.MPI_SOURCE;
-
             if (inicio > n) {
                 tag = 99;
                 stop++;
             }
-
             MPI_Bsend(&inicio, 1, MPI_INT, dest, tag, MPI_COMM_WORLD);
             inicio += TAMANHO;
         }
