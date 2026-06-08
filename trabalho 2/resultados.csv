@@ -1,0 +1,8 @@
+programa,tipo,politica,n,threads,chunk,total_primos,tempo_segundos
+primos_sequencial,sequencial,sem_openmp,500000000,1,0,26355867,371.036405
+omp_primos_static,naive,static,500000000,4,10,26355867,117.667638
+omp_primos_dynamic,naive,dynamic,500000000,4,10,26355867,118.002702
+omp_primos_guided,naive,guided,500000000,4,10,26355867,117.703059
+bot_static,bag_of_tasks,static,500000000,4,10,26355867,120.892747
+bot_dynamic,bag_of_tasks,dynamic,500000000,4,10,26355867,120.884459
+bot_guided,bag_of_tasks,guided,500000000,4,10,26355867,120.606798
